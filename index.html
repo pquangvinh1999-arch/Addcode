@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVENGERS INVENTORY - NEXTGEN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-blue: #00f2ff;
+            --neon-purple: #bc13fe;
+            --dark-bg: #0a0b1e;
+        }
+        body { 
+            background: radial-gradient(circle at center, #1a1c3a 0%, #0a0b1e 100%); 
+            font-family: 'Inter', sans-serif; 
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        .font-avengers { font-family: 'Orbitron', sans-serif; }
+        
+        /* Glassmorphism effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        .neon-border {
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 15px var(--neon-blue), inset 0 0 5px var(--neon-blue);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .step-node {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .step-active {
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            box-shadow: 0 0 20px var(--neon-blue);
+            transform: scale(1.1);
+            color: white;
+        }
+
+        /* Animation Rung */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .shake { animation: shake 0.2s ease-in-out; }
+
+        .sync-pending { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="p-4 min-h-screen">
+
+    <div class="max-w-md mx-auto space-y-6">
+        <!-- Header Avengers Style -->
+        <div class="text-center space-y-2 py-4">
+            <h1 class="font-avengers text-3xl font-bold neon-text tracking-widest text-blue-400">AVENGERS</h1>
+            <p class="text-xs font-avengers text-purple-400 tracking-tighter opacity-80 uppercase">Inventory Intelligence System</p>
+        </div>
+
+        <!-- Bin Lock Section -->
+        <div class="glass rounded-2xl p-4 flex justify-between items-center border-l-4 border-blue-500">
+            <div>
+                <p class="text-[10px] font-avengers text-blue-300 uppercase">Target Location (Bin)</p>
+                <div id="currentLocDisp" class="text-2xl font-bold font-avengers text-white">WAITING...</div>
+            </div>
+            <button onclick="resetLocation()" class="bg-slate-800 hover:bg-slate-700 text-blue-400 p-2 rounded-lg border border-blue-500/30 transition-all active:scale-90">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- High-Tech Stepper -->
+        <div class="flex justify-between gap-2 px-2">
+            <div id="step-LOC" class="step-node flex-1 py-2 rounded-full text-[10px] font-avengers text-center border border-blue-500/30 bg-slate-900/50 text-slate-400">BIN</div>
+            <div id="step-CODE" class="step-node flex-1 py-2 rounded-full text-[10px] font-avengers text-center border border-blue-500/30 bg-slate-900/50 text-slate-400">CODE</div>
+            <div id="step-QTY" class="step-node flex-1 py-2 rounded-full text-[10px] font-avengers text-center border border-blue-500/30 bg-slate-900/50 text-slate-400">QTY</div>
+        </div>
+
+        <!-- Main Input Area -->
+        <div class="glass rounded-3xl p-6 space-y-6 neon-border">
+            <div class="relative">
+                <label id="inputLabel" class="absolute -top-3 left-4 px-2 bg-transparent text-xs font-avengers text-blue-400 neon-text uppercase">Scanning Bin...</label>
+                <input type="text" id="barcodeInput" 
+                       class="w-full p-5 bg-slate-900/80 border border-blue-500/50 rounded-2xl text-2xl text-center font-avengers text-white outline-none focus:ring-2 focus:ring-blue-400 transition-all" 
+                       placeholder="S C A N  H E R E" autofocus>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <button id="btnSync" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-2xl font-avengers font-bold hover:from-blue-500 hover:to-indigo-500 transition-all active:scale-95 shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2">
+                    <span>⚡</span> SYNC GAS
+                </button>
+                <button id="btnClear" class="bg-slate-800 text-slate-400 py-4 rounded-2xl font-avengers font-bold hover:bg-red-900/30 hover:text-red-400 transition-all active:scale-95 border border-slate-700">
+                    CLEAR ALL
+                </button>
+            </div>
+        </div>
+
+        <!-- Sync Queue List -->
+        <div class="glass rounded-3xl p-4 overflow-hidden">
+            <div class="flex justify-between items-center mb-4 px-2">
+                <h3 class="font-avengers text-sm text-blue-300 uppercase tracking-widest">Data Stream</h3>
+                <span id="count" class="bg-blue-500/20 text-blue-400 text-[10px] font-avengers px-2 py-1 rounded-full border border-blue-500/30">0 ITEMS</span>
+            </div>
+            
+            <div class="overflow-y-auto max-h-64 custom-scrollbar">
+                <table class="w-full text-left text-xs">
+                    <thead class="text-slate-500 font-avengers uppercase border-b border-slate-800">
+                        <tr>
+                            <th class="pb-2">Bin</th>
+                            <th class="pb-2">Code</th>
+                            <th class="pb-2">Qty</th>
+                            <th class="pb-2 text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataList" class="divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sound Effect -->
+    <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+
+    <script>
+        // --- CONFIGURATION ---
+        const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyQNS1eZq7ILLeMS-mS4CZ1ZTr0N-5_4sfiS_6mF9SPieukMTQSNE1mJt1NjQoAvLur2w/exec'; // Thay bằng URL của anh
+
+        // --- DOM ELEMENTS ---
+        const barcodeInput = document.getElementById('barcodeInput');
+        const dataList = document.getElementById('dataList');
+        const countDisp = document.getElementById('count');
+        const locDisp = document.getElementById('currentLocDisp');
+        const inputLabel = document.getElementById('inputLabel');
+        const beep = document.getElementById('beepSound');
+        
+        const steps = {
+            LOC: document.getElementById('step-LOC'),
+            CODE: document.getElementById('step-CODE'),
+            QTY: document.getElementById('step-QTY')
+        };
+
+        // --- STATE MANAGEMENT ---
+        let state = {
+            currentLoc: localStorage.getItem('avengers_bin') || '',
+            step: 'LOC', // LOC -> CODE -> QTY
+            tempRow: { code: '', qty: '' },
+            inventory: JSON.parse(localStorage.getItem('avengers_data')) || []
+        };
+
+        // --- UTILITIES ---
+        function playSound() {
+            beep.currentTime = 0;
+            beep.play();
+        }
+
+        function vibrate() {
+            if (navigator.vibrate) navigator.vibrate(100);
+        }
+
+        function triggerEffect() {
+            playSound();
+            vibrate();
+            barcodeInput.classList.add('shake');
+            setTimeout(() => barcodeInput.classList.remove('shake'), 200);
+        }
+
+        function updateUI() {
+            locDisp.innerText = state.currentLoc || 'WAITING...';
+            localStorage.setItem('avengers_bin', state.currentLoc);
+
+            // Render Table
+            dataList.innerHTML = '';
+            state.inventory.slice().reverse().forEach((row, index) => {
+                const realIndex = state.inventory.length - 1 - index;
+                const tr = document.createElement('tr');
+                tr.className = "group hover:bg-white/5 transition-all";
+                tr.innerHTML = `
+                    <td class="py-3 text-slate-400">${row.bin}</td>
+                    <td class="py-3 font-bold text-white cursor-pointer hover:text-blue-400" onclick="editRow(${realIndex}, 'code')">${row.code}</td>
+                    <td class="py-3 font-bold text-blue-400 cursor-pointer hover:text-white" onclick="editRow(${realIndex}, 'qty')">${row.qty}</td>
+                    <td class="py-3 text-right">
+                        ${row.synced ? 
+                            '<span class="text-green-500">✓</span>' : 
+                            '<span class="sync-pending text-yellow-500 font-avengers text-[10px]">SYNCING...</span>'}
+                        <button onclick="deleteRow(${realIndex})" class="ml-2 text-red-500 opacity-0 group-hover:opacity-100 transition-all">✕</button>
+                    </td>
+                `;
+                dataList.appendChild(tr);
+            });
+
+            countDisp.innerText = `${state.inventory.length} ITEMS`;
+            localStorage.setItem('avengers_data', JSON.stringify(state.inventory));
+            updateStepper();
+        }
+
+        function updateStepper() {
+            // Reset all
+            Object.values(steps).forEach(el => el.className = 'step-node flex-1 py-2 rounded-full text-[10px] font-avengers text-center border border-blue-500/30 bg-slate-900/50 text-slate-400');
+            
+            if (state.step === 'LOC') {
+                inputLabel.innerText = "Scanning Location (Bin)...";
+                steps.LOC.classList.add('step-active');
+            } else if (state.step === 'CODE') {
+                inputLabel.innerText = "Scanning Item Code...";
+                steps.LOC.classList.add('step-done'); // Note: simplistic, logic is in the currentStep
+                steps.CODE.classList.add('step-active');
+            } else if (state.step === 'QTY') {
+                inputLabel.innerText = "Enter Quantity...";
+                steps.QTY.classList.add('step-active');
+            }
+        }
+
+        function resetLocation() {
+            state.currentLoc = '';
+            state.step = 'LOC';
+            updateUI();
+            barcodeInput.focus();
+        }
+
+        // --- CORE LOGIC ---
+        barcodeInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const val = barcodeInput.value.trim();
+                if (!val) return;
+
+                if (state.step === 'LOC' || !state.currentLoc) {
+                    state.currentLoc = val;
+                    state.step = 'CODE';
+                    triggerEffect();
+                } else if (state.step === 'CODE') {
+                    state.tempRow.code = val;
+                    state.step = 'QTY';
+                    triggerEffect();
+                } else if (state.step === 'QTY') {
+                    state.tempRow.qty = val;
+                    
+                    // Push to data stream
+                    state.inventory.push({
+                        bin: state.currentLoc,
+                        code: state.tempRow.code,
+                        qty: state.tempRow.qty,
+                        synced: false,
+                        timestamp: new Date().getTime()
+                    });
+
+                    state.tempRow = { code: '', qty: '' };
+                    state.step = 'CODE'; // Auto return to code for next item in same Bin
+                    triggerEffect();
+                }
+
+                updateUI();
+                barcodeInput.value = ''; 
+            }
+        });
+
+        function editRow(index, field) {
+            const row = state.inventory[index];
+            const newVal = prompt(`Sửa ${field} cho ${row.code}:`, row[field]);
+            if (newVal !== null) {
+                state.inventory[index][field] = newVal;
+                updateUI();
+            }
+        }
+
+        function deleteRow(index) {
+            if (confirm('Xóa dòng này khỏi luồng dữ liệu?')) {
+                state.inventory.splice(index, 1);
+                updateUI();
+            }
+        }
+
+        // --- GOOGLE SHEETS SYNC (GAS) ---
+        async function syncToGoogleSheets() {
+            const unsynced = state.inventory.filter(item => !item.synced);
+            if (unsynced.length === 0) {
+                alert('Không có dữ liệu mới để đồng bộ!');
+                return;
+            }
+
+            document.getElementById('btnSync').innerText = "SYNCING...";
+            document.getElementById('btnSync').disabled = true;
+
+            for (let item of state.inventory) {
+                if (!item.synced) {
+                    try {
+                        // Gửi dữ liệu lên GAS (Cột A: Bin, B: Code, C: Qty)
+                        await fetch(GAS_WEBAPP_URL, {
+                            method: 'POST',
+                            mode: 'no-cors', // GAS thường yêu cầu no-cors nếu không setup CORS
+                            cache: 'no-cache',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                bin: item.bin,
+                                code: item.code,
+                                qty: item.qty
+                            })
+                        });
+                        item.synced = true;
+                        updateUI();
+                    } catch (err) {
+                        console.error("Sync error:", err);
+                    }
+                }
+            }
+
+            document.getElementById('btnSync').innerText = "⚡ SYNC GAS";
+            document.getElementById('btnSync').disabled = false;
+            alert('Đồng bộ thành công!');
+        }
+
+        document.getElementById('btnSync').addEventListener('click', syncToGoogleSheets);
+        document.getElementById('btnClear').addEventListener('click', () => {
+            if (confirm('Xóa toàn bộ dữ liệu trong máy?')) {
+                state.inventory = [];
+                state.currentLoc = '';
+                state.step = 'LOC';
+                updateUI();
+            }
+        });
+
+        // Auto focus
+        document.addEventListener('click', () => barcodeInput.focus());
+
+        // Init
+        updateUI();
+    </script>
+</body>
+</html>
